@@ -6,7 +6,7 @@ var path = require('path');
 var num_usuarios = 0;
 var bye = "Hasta pronto!";
 var usuarios = {};
-var snake_x,snake_y,food_x,food_y,alto = 300,ancho = 300;
+var snake_x,snake_y,food_x,food_y,alto = 10,ancho = 10;
 
 function think(snake_x,snake_y,food_x,food_y,ult,ult2){
     console.time("bench");
@@ -94,28 +94,53 @@ function think(snake_x,snake_y,food_x,food_y,ult,ult2){
 
 function thinkprofundidad(snake_x,snake_y,food_x,food_y){
     // console.time("bench");
+    console.log("calculando");
+    console.log(snake_x,snake_y,food_x,food_y);
     var camino = [];
-    if(snake_x == food_x && snake_y == food_y) return [{ x:snake_x, y:snake_y}];
-    if(snake_x == alto || snake_y == ancho) return [];
-    if(snake_x-1 > 0 && snake_x-1 < 300 && snake_y > 0 && snake_y > 300){
-        camino = thinkprofundidad(snake_x-1,snake_y,food_x,food_y);
-        if(camino.length > 0){
-            camino.push({x:snake_x,y:snake_y});
-            return camino;
+    if(snake_x == food_x && snake_y == food_y){ console.log("1 if"); camino.push("fin"); return camino; }
+    if(snake_x == alto || snake_y == ancho) { console.log("2 if"); return []; }
+    if(snake_x-1 >= 0 ){
+        console.log("3 if");
+        camino.push(thinkprofundidad(snake_x-1,snake_y,food_x,food_y));
+        if(camino && camino.length > 0 && camino[camino.length] != []){
+            camino.push("norte");
+            console.log("pusheando norte");
+            return "norte";
         }
     }
 
-    if(snake_y > 299 && snake_y+1 > 300){
-        camino = thinkprofundidad(snake_x-1,snake_y,food_x,food_y);
-        if(camino.length > 0){
-            camino.push({x:snake_x,y:snake_y});
-            return camino;
+    if(snake_y+1 <= ancho){
+        console.log("4 if");
+        camino.push(thinkprofundidad(snake_x,snake_y+1,food_x,food_y));
+        if(camino && camino.length > 0 && camino[camino.length] != []){
+            camino.push("este");
+            console.log("pusheando este");
+            return "este";
         }
     }
-    ultdir=direccion;
-    ultmov=movimiento;
+
+    if(snake_x+1 <= alto){
+        console.log("5 if");
+        camino.push(thinkprofundidad(snake_x+1,snake_y,food_x,food_y));
+        if(camino && camino.length > 0 && camino[camino.length] != []){
+            camino.push("sur");
+            console.log("pusheando sur");
+            return "sur";
+        }
+    }
+
+    if(snake_y-1 >= 0){
+        console.log("6 if");
+        camino.push(thinkprofundidad(snake_x,snake_y-1,food_x,food_y));
+        if(camino && camino.length > 0 && camino[camino.length]!= []){
+            camino.push("oeste");
+            console.log("pusheando oeste");
+            return "oeste";
+        }
+    }
+    console.log("salgo...f");
     // console.timeEnd("bench");
-    return {movimiento:movimiento, direccion:direccion};
+    return [];
 
 }
 
@@ -145,25 +170,40 @@ io.on('connection', function(socket){
 
         food_x=data.x;
         food_y=data.y;
-        //   console.log("comida: ",food_x,food_y);
+          console.log("comida: ",food_x,food_y);
         // socket.emit('next_move',"down")
     });
 
     socket.on('snake_coords', function (data) {
-        console.time("coords");
+        // console.time("coords");
         var data;
         snake_x=data.snake_x;
         snake_y=data.snake_y;
-        //console.log("serpiente: ",snake_x,snake_y);
-        data = think(snake_x,snake_y,food_x,food_y,ultmov,ultdir);
+        // console.log("serpiente: ",snake_x,snake_y);
+        data = thinkprofundidad(snake_x,snake_y,food_x,food_y,ultmov,ultdir);
+        console.log(data);
         ultmov=data.movimiento;
         ultdir=data.direccion;
         socket.emit('next_move',data.movimiento);
-        console.timeEnd("coords");
+        // console.timeEnd("coords");
     });
 
 });
 
+function emular(x,y,fx,fy){
+    var res = [];
+    res = thinkprofundidad(x,y,fx,fy);
+    if(res.length > 0){
+        for(var i=0;i<res.length;i++){
+            console.log(res[i]);
+        }
+    }else{
+        console.log("ELSE-----------------");
+        console.log(res);
+    }
+}
+
 http.listen(3000, function(){
     console.log('listening on *:3000');
+    emular(0,4,5,5);
 });

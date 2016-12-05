@@ -6,18 +6,12 @@ var path = require('path');
 var num_usuarios = 0;
 var bye = "Hasta pronto!";
 var usuarios = {};
-var snake_x,snake_y,food_x,food_y;
+var snake_x,snake_y,food_x,food_y,alto = 300,ancho = 300;
 
 function think(snake_x,snake_y,food_x,food_y,ult,ult2){
+    console.time("bench");
     var movimiento=ult;
     var direccion=ult2;
-    console.log("movimiento..."+movimiento+" direccion "+direccion);
-    /*
-     if(direccion!="norte" && direccion!="sur" && direccion!="este" && direccion!="oeste" ){
-     direccion="sur";
-     movimiento="down";
-     }
-     */
     if(snake_x < food_x && direccion=="este" ){
         movimiento="right";
         direccion="este";
@@ -26,7 +20,6 @@ function think(snake_x,snake_y,food_x,food_y,ult,ult2){
     else if(snake_x < food_x && direccion=="norte" ){
         movimiento="right";
         direccion="este";
-;
     }
     else if(snake_x < food_x && direccion=="oeste" ){
         movimiento="up";
@@ -93,11 +86,39 @@ function think(snake_x,snake_y,food_x,food_y,ult,ult2){
 
 
     ultdir=direccion;
-    console.log(direccion);
     ultmov=movimiento;
+    console.timeEnd("bench");
     return {movimiento:movimiento, direccion:direccion};
 
 }
+
+function thinkprofundidad(snake_x,snake_y,food_x,food_y){
+    // console.time("bench");
+    var camino = [];
+    if(snake_x == food_x && snake_y == food_y) return [{ x:snake_x, y:snake_y}];
+    if(snake_x == alto || snake_y == ancho) return [];
+    if(snake_x-1 > 0 && snake_x-1 < 300 && snake_y > 0 && snake_y > 300){
+        camino = thinkprofundidad(snake_x-1,snake_y,food_x,food_y);
+        if(camino.length > 0){
+            camino.push({x:snake_x,y:snake_y});
+            return camino;
+        }
+    }
+
+    if(snake_y > 299 && snake_y+1 > 300){
+        camino = thinkprofundidad(snake_x-1,snake_y,food_x,food_y);
+        if(camino.length > 0){
+            camino.push({x:snake_x,y:snake_y});
+            return camino;
+        }
+    }
+    ultdir=direccion;
+    ultmov=movimiento;
+    // console.timeEnd("bench");
+    return {movimiento:movimiento, direccion:direccion};
+
+}
+
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', function(req, res){
@@ -107,8 +128,11 @@ app.get('/', function(req, res){
 io.on('connection', function(socket){
     var ultdir="este";
     var ultmov="right";
-    socket.on('chat message', function(msg){
-        io.emit('chat message', msg);
+
+    socket.on('tam', function(msg){
+        alto = msg.alto;
+        ancho=msg.ancho;
+        console.log("alto ",alto);
     });
 
     socket.on('disconnect', function() {
@@ -126,6 +150,7 @@ io.on('connection', function(socket){
     });
 
     socket.on('snake_coords', function (data) {
+        console.time("coords");
         var data;
         snake_x=data.snake_x;
         snake_y=data.snake_y;
@@ -134,6 +159,7 @@ io.on('connection', function(socket){
         ultmov=data.movimiento;
         ultdir=data.direccion;
         socket.emit('next_move',data.movimiento);
+        console.timeEnd("coords");
     });
 
 });

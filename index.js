@@ -6,7 +6,7 @@ var path = require('path');
 var num_usuarios = 0;
 var bye = "Hasta pronto!";
 var usuarios = {};
-var snake_x,snake_y,food_x,food_y,alto = 10,ancho = 10;
+var snake_x,snake_y,food_x,food_y,alto = 3,ancho = 3;
 
 function think(snake_x,snake_y,food_x,food_y,ult,ult2){
     console.time("bench");
@@ -93,57 +93,61 @@ function think(snake_x,snake_y,food_x,food_y,ult,ult2){
 }
 
 var camino = [];
-
-function thinkprofundidad(snake_x,snake_y,food_x,food_y){
-    // console.time("bench");
-    console.log("calculando");
-    console.log(snake_x,snake_y,food_x,food_y);
-    // si es hoja
-    if(snake_x == food_x && snake_y == food_y){ console.log("1 if"); return "fin"; }
-    if(snake_x == alto || snake_y == ancho) { console.log("2 if"); return ""; }
-    if(snake_x-1 >= 0 ){
-        console.log("3 if");
-        camino.push(thinkprofundidad(snake_x-1,snake_y,food_x,food_y));
-        if(camino && camino.length > 0 && camino[camino.length-1]!= ""){
-            //camino.push("norte");
-            //console.log("pusheando norte");
-            return "norte";
-        }
+var solucion=[[0,0],[0,0],[0,0]];
+function thinkprofundidad(snake_x,snake_y,food_x,food_y,callback){
+    console.log("Entrando,siendo si colision en ...",snake_x,snake_y,food_x,food_y);
+    if(snake_x == food_x && snake_y == food_y){
+        camino.push("fin");
+        console.log("fin...");
+        return callback(camino);
+    }else{
+        console.log(solucion[snake_x][snake_y]);
     }
-
-    if(snake_y+1 <= ancho){
-        console.log("4 if");
-        camino.push(thinkprofundidad(snake_x,snake_y+1,food_x,food_y));
-        if(camino && camino.length > 0 && camino[camino.length-1] != ""){
-           // camino.push("este");
-           // console.log("pusheando este");
-            return "este";
-        }
+    if(snake_x > ancho || snake_y > alto || snake_x < 0 || snake_y < 0 || solucion[snake_x][snake_y] == -1){
+        console.log("ME HE CHOCAO EN ...",snake_x,snake_y,food_x,food_y);
+        camino.push("");
+        return callback(camino);
     }
+    //ir al norte
+    //else if(snake_x-1 >= 0){
+    thinkprofundidad(snake_x-1,snake_y,food_x,food_y,function(datos) {
+        datos.push("norte");
+        console.log("colision yendo al norte, voy al oeste");
+        return datos;
+        //return callback;
+    });
+    thinkprofundidad(snake_x,snake_y-1,food_x,food_y,function(datos) {
+        datos.push("oeste");
+        console.log("colision yendo al oeste,voy al sur");
+        return datos;
+        //return callback;
+    });
+    thinkprofundidad(snake_x+1,snake_y,food_x,food_y,function(datos) {
+        datos.push("sur");
+        console.log("colision yendo al sur,soy al este");
+        return datos;
+        // return callback;
+    });
+    thinkprofundidad(snake_x,snake_y+1,food_x,food_y,function(datos) {
+        datos.push("este");
+        console.log("colision yendo al este, voy al norte");
+        return datos;
+        // return callback;
+    });
+    return "";
 
-    if(snake_x+1 <= alto){
-        console.log("5 if");
-        camino.push(thinkprofundidad(snake_x+1,snake_y,food_x,food_y));
-        if(camino && camino.length > 0 && camino[camino.length-1] != ""){
-           // camino.push("sur");
-           // console.log("pusheando sur");
-            return "sur";
-        }
-    }
 
-    if(snake_y-1 >= 0){
-        console.log("6 if");
-        camino.push(thinkprofundidad(snake_x,snake_y-1,food_x,food_y));
-        if(camino && camino.length > 0 && camino[camino.length-1]!= ""){
-           // camino.push("oeste");
-           // console.log("pusheando oeste");
-            return "oeste";
-        }
-    }
-    console.log("salgo...f");
-    // console.timeEnd("bench");
-    return camino;
+    //  }
+    //   else if(snake_x+1 <= alto){
 
+    // }
+    // else if(snake_y-1 >= 0){
+
+    // }
+    // else if(snake_y+1 <= alto){
+
+    // }
+    //return callback(camino);
 }
 
 
@@ -172,7 +176,7 @@ io.on('connection', function(socket){
 
         food_x=data.x;
         food_y=data.y;
-          console.log("comida: ",food_x,food_y);
+        console.log("comida: ",food_x,food_y);
         // socket.emit('next_move',"down")
     });
 
@@ -193,19 +197,24 @@ io.on('connection', function(socket){
 });
 
 function emular(x,y,fx,fy){
-    var res = [];
-    res = thinkprofundidad(x,y,fx,fy);
-    if(res.length > 0){
-        for(var i=0;i<res.length;i++){
-            console.log(res[i]);
+    // var res = [];
+    res = thinkprofundidad(x,y,fx,fy,function(res){
+        console.log("saliendo de funcion");
+        if(res.length > 0){
+            for(var i=0;i<res.length;i++){
+                console.log(res[i]);
+            }
+        }else{
+            console.log("ELSE-----------------");
+            console.log(res);
         }
-    }else{
-        console.log("ELSE-----------------");
-        console.log(res);
-    }
+    });
+
 }
+
+
 
 http.listen(3000, function(){
     console.log('listening on *:3000');
-    emular(0,4,5,5);
+    emular(1,1,2,2);
 });

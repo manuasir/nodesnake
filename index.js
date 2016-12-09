@@ -92,19 +92,21 @@ function think(snake_x,snake_y,food_x,food_y,ult,ult2){
 
 }
 
+var camino = [];
+
 function thinkprofundidad(snake_x,snake_y,food_x,food_y){
     // console.time("bench");
     console.log("calculando");
     console.log(snake_x,snake_y,food_x,food_y);
-    var camino = [];
-    if(snake_x == food_x && snake_y == food_y){ console.log("1 if"); camino.push("fin"); return camino; }
-    if(snake_x == alto || snake_y == ancho) { console.log("2 if"); return []; }
+    // si es hoja
+    if(snake_x == food_x && snake_y == food_y){ console.log("1 if"); return "fin"; }
+    if(snake_x == alto || snake_y == ancho) { console.log("2 if"); return ""; }
     if(snake_x-1 >= 0 ){
         console.log("3 if");
         camino.push(thinkprofundidad(snake_x-1,snake_y,food_x,food_y));
-        if(camino && camino.length > 0 && camino[camino.length] != []){
-            camino.push("norte");
-            console.log("pusheando norte");
+        if(camino && camino.length > 0 && camino[camino.length-1]!= ""){
+            //camino.push("norte");
+            //console.log("pusheando norte");
             return "norte";
         }
     }
@@ -112,9 +114,9 @@ function thinkprofundidad(snake_x,snake_y,food_x,food_y){
     if(snake_y+1 <= ancho){
         console.log("4 if");
         camino.push(thinkprofundidad(snake_x,snake_y+1,food_x,food_y));
-        if(camino && camino.length > 0 && camino[camino.length] != []){
-            camino.push("este");
-            console.log("pusheando este");
+        if(camino && camino.length > 0 && camino[camino.length-1] != ""){
+           // camino.push("este");
+           // console.log("pusheando este");
             return "este";
         }
     }
@@ -122,9 +124,9 @@ function thinkprofundidad(snake_x,snake_y,food_x,food_y){
     if(snake_x+1 <= alto){
         console.log("5 if");
         camino.push(thinkprofundidad(snake_x+1,snake_y,food_x,food_y));
-        if(camino && camino.length > 0 && camino[camino.length] != []){
-            camino.push("sur");
-            console.log("pusheando sur");
+        if(camino && camino.length > 0 && camino[camino.length-1] != ""){
+           // camino.push("sur");
+           // console.log("pusheando sur");
             return "sur";
         }
     }
@@ -132,15 +134,15 @@ function thinkprofundidad(snake_x,snake_y,food_x,food_y){
     if(snake_y-1 >= 0){
         console.log("6 if");
         camino.push(thinkprofundidad(snake_x,snake_y-1,food_x,food_y));
-        if(camino && camino.length > 0 && camino[camino.length]!= []){
-            camino.push("oeste");
-            console.log("pusheando oeste");
+        if(camino && camino.length > 0 && camino[camino.length-1]!= ""){
+           // camino.push("oeste");
+           // console.log("pusheando oeste");
             return "oeste";
         }
     }
     console.log("salgo...f");
     // console.timeEnd("bench");
-    return [];
+    return camino;
 
 }
 
